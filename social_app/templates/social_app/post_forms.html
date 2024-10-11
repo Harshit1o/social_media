@@ -1,0 +1,103 @@
+<!-- social_app/templates/social_app/post_form.html -->
+{% extends 'social_app/base.html' %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Edit Post
+    {% else %}
+        Create New Post
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-4">
+                    {% if form.instance.pk %}
+                        Edit Post
+                    {% else %}
+                        Create New Post
+                    {% endif %}
+                </h2>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">Content</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.content.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">Image</label>
+                        {{ form.image }}
+                        {% if form.image.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.image.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.instance.image %}
+                            <div class="mt-2">
+                                <p>Current image:</p>
+                                <img src="{{ form.instance.image.url }}" alt="Current post image" style="max-width: 200px;">
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">
+                            {% if form.instance.pk %}
+                                Update Post
+                            {% else %}
+                                Create Post
+                            {% endif %}
+                        </button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Add Bootstrap classes to form elements
+    $('#{{ form.content.id_for_label }}').addClass('form-control');
+    $('#{{ form.image.id_for_label }}').addClass('form-control');
+    
+    // Preview image before upload
+    $('#{{ form.image.id_for_label }}').change(function() {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var previewHtml = '<div class="mt-2"><p>Preview:</p><img src="' + e.target.result + '" alt="Image preview" style="max-width: 200px;"></div>';
+                $('.image-preview').remove();
+                $(previewHtml).insertAfter('#{{ form.image.id_for_label }}').addClass('image-preview');
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+});
+</script>
+{% endblock %}

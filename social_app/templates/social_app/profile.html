@@ -1,0 +1,112 @@
+<!-- social_app/templates/social_app/profile.html -->
+{% extends 'social_app/base.html' %}
+{% load static %}
+
+{% block title %}{{ profile.user.username }} - Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                {% if profile.profile_picture %}
+                    <img src="{{ profile.profile_picture.url }}" class="rounded-circle profile-picture mb-3">
+                {% else %}
+                    <img src="{% static 'social_app/13.jpg' %}" class="rounded-circle profile-picture mb-3">  
+                {% endif %}
+                <h5 class="card-title">{{ profile.user.username }}</h5>
+                <p class="card-text">{{ profile.bio }}</p>
+                <div class="d-flex justify-content-around mb-3">
+                    <div>
+                        <h6>Posts</h6>
+                        <span class="badge bg-secondary">{{ profile.user.posts.count }}</span>
+                    </div>
+                    <div>
+                        <h6>Followers</h6>
+                        <span class="badge bg-secondary">{{ profile.followers.count }}</span>
+                    </div>
+                    <div>
+                        <h6>Following</h6>
+                        <span class="badge bg-secondary">{{ profile.following.count }}</span>
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                    {% if user != profile.user %}
+                        <button class="btn btn-primary follow-btn" data-username="{{ profile.user.username }}">
+                            {% if user.profile in profile.followers.all %}
+                                Unfollow
+                            {% else %}
+                                Follow
+                            {% endif %}
+                        </button>
+                    {% else %}
+                        <a href="{% url 'profile-update' %}" class="btn btn-secondary">Edit Profile</a>
+                    {% endif %}
+                {% else %}
+                    <p><a href="{% url 'login' %}" class="btn btn-primary">Log in to follow</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <h4 class="mb-3">Posts</h4>
+        {% for post in posts %}
+            <div class="card post-card">
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" class="card-img-top" alt="Post image">
+                {% endif %}
+                <div class="card-body">
+                    <p class="card-text">{{ post.content }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button class="btn btn-link like-btn" data-post-id="{{ post.id }}">
+                                <i class="fas fa-heart {% if request.user in post.likes.all %}text-danger{% endif %}"></i>
+                                <span class="like-count">{{ post.likes.count }}</span>
+                            </button>
+                            <a href="{% url 'post-detail' pk=post.id %}" class="btn btn-link">
+                                <i class="fas fa-comment"></i> {{ post.comments.count }}
+                            </a>
+                        </div>
+                        <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                        
+{% if user == post.author %}
+<a href="{% url 'post-delete' post.id %}" class="btn btn-danger">Delete</a>
+{% endif %}
+
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info">No posts yet.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.follow-btn').click(function() {
+        var button = $(this);
+        var username = button.data('username');
+        $.ajax({
+            url: '/profile/' + username + '/follow/',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.is_following) {
+                    button.text('Unfollow');
+                } else {
+                    button.text('Follow');
+                }
+                location.reload(); // Reload the page to update follower count
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
